@@ -41,6 +41,12 @@ button:hover {
     background-color: #fff;
 }
 
+#webcam-container canvas {
+    border: 5px solid black;
+    border-radius: 15px;
+    box-shadow: 0 0 10px cyan;
+}
+
 #label-container {
     margin-top: 20px;
     font-size: 18px;
