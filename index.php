@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Deteksi Posisi Buku</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+</head>
+
+<body>
+
+    <h2>Deteksi Posisi Buku</h2>
+
+    <button type="button" onclick="init()">Start</button>
+    <button type="button" onclick="stop()">Stop</button>
+    <br>
+    <br>
+    <br>
+
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
+
+    <script>
+        const URL = "tm-my-image-model/";
+
+        let model, webcam, labelContainer, maxPredictions;
+        let isRunning = false;
+
+        async function init() {
+
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            const flip = true;
+            webcam = new tmImage.Webcam(300, 300, flip);
+
+            await webcam.setup();
+            await webcam.play();
+
+            isRunning = true;
+            window.requestAnimationFrame(loop);
+
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+            labelContainer = document.getElementById("label-container");
+        }
+
+        function stop() {
+            isRunning = false;
+            if (webcam) {
+                webcam.stop();
+            }
+            // Hapus canvas dari container
+            const container = document.getElementById("webcam-container");
+            container.innerHTML = "";
+            // Kosongkan label container
+            if (labelContainer) {
+                labelContainer.innerHTML = "";
+                labelContainer = null;
+            }
+        }
+
+        async function loop() {
+            if (!isRunning) return;
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predict() {
+            if (!isRunning || !labelContainer) return;
+
+            const prediction = await model.predict(webcam.canvas);
+
+            let maxProb = 0;
+            let maxIndex = 0;
+
+            for (let i = 0; i < maxPredictions; i++) {
+                if (prediction[i].probability > maxProb) {
+                    maxProb = prediction[i].probability;
+                    maxIndex = i;
+                }
+            }
+
+            labelContainer.innerHTML = prediction[maxIndex].className;
+        }
+    </script>
+
+</body>
+
+</html>
